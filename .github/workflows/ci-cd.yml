@@ -13,17 +13,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      -  name: Install SSH key for Instance 1
-         uses: shimataro/ssh-key-action@v2
-         with:
-              key: ${{ secrets.SSH_PRIVATE_KEY_INSTANCE_1 }}
-              known_hosts: ${{ secrets.KNOWN_HOSTS }}
-
-      - name: Deploy to Instance 1
-        run: |
-                scp -o StrictHostKeyChecking=no -i /tmp/ssh-key Webpage1-Test-Instance/* ubuntu@${{ secrets.INSTANCE_1_IP }}:/var/www/html/
-                ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key ubuntu@${{ secrets.INSTANCE_1_IP }} "sudo systemctl restart apache2"
-
+      
       - name: Install SSH key for Instance 2
         uses: shimataro/ssh-key-action@v2
         with:
@@ -34,3 +24,14 @@ jobs:
         run: |
                scp -o StrictHostKeyChecking=no -i /tmp/ssh-key Webpage2-Test-Machine/* ubuntu@${{ secrets.INSTANCE_2_IP }}:/var/www/html/
                ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key ubuntu@${{ secrets.INSTANCE_2_IP }} "sudo systemctl restart httpd"
+     
+      -  name: Install SSH key for Instance 1
+         uses: shimataro/ssh-key-action@v2
+         with:
+              key: ${{ secrets.SSH_PRIVATE_KEY_INSTANCE_1 }}
+              known_hosts: ${{ secrets.KNOWN_HOSTS }}
+
+      - name: Deploy to Instance 1
+        run: |
+                scp -o StrictHostKeyChecking=no -i /tmp/ssh-key Webpage1-Test-Instance/* ubuntu@${{ secrets.INSTANCE_1_IP }}:/var/www/html/
+                ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key ubuntu@${{ secrets.INSTANCE_1_IP }} "sudo systemctl restart apache2"
