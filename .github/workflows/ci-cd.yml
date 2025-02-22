@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for Two Webpages
+name: Deploy to EC2 Instances
 
 on:
   push:
@@ -8,35 +8,23 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # Checkout repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      # Configure AWS CLI
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ secrets.KNOWN_HOSTS }}
 
-      # Deploy to EC2 Instance 1 (Amazon Linux)
-      - name: Deploy to EC2 Instance 1
+      - name: Deploy to Instance 1
         run: |
-          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_INSTANCE_1_IP }} << 'EOF'
-            sudo cp /path/to/repo/webpage1/index.html /var/www/html/index.html
-            sudo systemctl restart httpd
-          EOF
+          scp -o StrictHostKeyChecking=no -i /tmp/ssh-key Webpage1-Test-Instance/* ubuntu@${{ secrets.INSTANCE_1_IP }}:/var/www/html/
+          ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key ubuntu@${{ secrets.INSTANCE_1_IP }} "sudo systemctl restart apache2"
 
-      # Deploy to EC2 Instance 2 (Ubuntu)
-      - name: Deploy to EC2 Instance 2
+      - name: Deploy to Instance 2
         run: |
-          echo "${{ secrets.AWS_SSH_PRIVATE_KEY_2 }}" > private_key.pem
-          chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_INSTANCE_2_IP }} << 'EOF'
-            sudo cp /path/to/repo/webpage2/index.html /var/www/html/index.html
-            sudo systemctl restart apache2
-          EOF
+          scp -o StrictHostKeyChecking=no -i /tmp/ssh-key Webpage2-Test-Machine/* ubuntu@${{ secrets.INSTANCE_2_IP }}:/var/www/html/
+          ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key ubuntu@${{ secrets.INSTANCE_2_IP }} "sudo systemctl restart httpd"
