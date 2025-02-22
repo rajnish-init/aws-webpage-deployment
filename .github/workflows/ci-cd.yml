@@ -1,0 +1,42 @@
+name: CI/CD Pipeline for Two Webpages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Configure AWS CLI
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Deploy to EC2 Instance 1 (Amazon Linux)
+      - name: Deploy to EC2 Instance 1
+        run: |
+          echo "${{ secrets.AWS_SSH_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ secrets.EC2_INSTANCE_1_IP }} << 'EOF'
+            sudo cp /path/to/repo/webpage1/index.html /var/www/html/index.html
+            sudo systemctl restart httpd
+          EOF
+
+      # Deploy to EC2 Instance 2 (Ubuntu)
+      - name: Deploy to EC2 Instance 2
+        run: |
+          echo "${{ secrets.AWS_SSH_PRIVATE_KEY_2 }}" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@${{ secrets.EC2_INSTANCE_2_IP }} << 'EOF'
+            sudo cp /path/to/repo/webpage2/index.html /var/www/html/index.html
+            sudo systemctl restart apache2
+          EOF
