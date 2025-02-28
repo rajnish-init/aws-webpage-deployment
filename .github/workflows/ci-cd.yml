@@ -1,28 +1,60 @@
-name: Deploy to Servers
+name: Deploy to Web Servers
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger the workflow on push to the main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        server:
-          - { name: "ubuntu", ip: ${{ secrets.UBUNTU_IP }}, target: "/var/www/html/index.html" }
-          - { name: "redhat", ip: ${{ secrets.REDHAT_IP }}, target: "/usr/share/nginx/html/index.html" }
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
 
-      - name: Deploy to ${{ matrix.server.name }} server
-        uses: appleboy/scp-action@v0.1.0
-        with:
-          host: ${{ matrix.server.ip }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: 22
-          source: "index.html"
-          target: ${{ matrix.server.target }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v34
+      with:
+        files: |
+          Webpage1-Test-Instance/**
+          Webpage2-Test-Machine/**
+
+    - name: Add Instance 1 to known_hosts
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan ${{ secrets.INSTANCE1_IP }} >> ~/.ssh/known_hosts
+
+    - name: Deploy Webpage 1 to Instance 1
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.INSTANCE1_IP }}
+        username: ${{ secrets.INSTANCE1_USER }}
+        key: ${{ secrets.INSTANCE1_SSH_KEY }}
+        script: |
+          cd /var/www/html
+          sudo rm -rf *
+          sudo cp -r $GITHUB_WORKSPACE/Webpage1-Test-Instance/* .
+          sudo systemctl restart nginx
+
+    - name: Add Instance 2 to known_hosts
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan ${{ secrets.INSTANCE2_IP }} >> ~/.ssh/known_hosts
+
+    - name: Deploy Webpage 2 to Instance 2
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.INSTANCE2_IP }}
+        username: ${{ secrets.INSTANCE2_USER }}
+        key: ${{ secrets.INSTANCE2_SSH_KEY }}
+        script: |
+          cd /var/www/html
+          sudo rm -rf *
+          sudo cp -r $GITHUB_WORKSPACE/Webpage2-Test-Machine/* .
+          sudo systemctl restart nginx
