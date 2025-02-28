@@ -1,4 +1,4 @@
-name: Deploy to EC2 Instances
+name: Deploy to Servers
 
 on:
   push:
@@ -8,44 +8,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        server:
+          - { name: "ubuntu", ip: ${{ secrets.UBUNTU_IP }}, target: "/var/www/html/index.html" }
+          - { name: "redhat", ip: ${{ secrets.REDHAT_IP }}, target: "/usr/share/nginx/html/index.html" }
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      
-      
-      -  name: Install SSH key for Instance 1
-         uses: shimataro/ssh-key-action@v2
-         with:
-              key: ${{ secrets.SSH_PRIVATE_KEY_INSTANCE_1 }}
-              known_hosts: ${{ secrets.KNOWN_HOSTS }}
-
-      - name: Debug /tmp directory
-        run: ls -l /tmp/
-
-      - name: Debug SSH key file
-        run: cat /tmp/ssh-key
-
-      - name: Debug SSH key permissions
-        run: ls -l /tmp/ssh-key
-
-      - name: Set SSH key permissions
-        run: chmod 600 /tmp/ssh-key
-
-      - name: Deploy to Instance 1
-        run: |
-                scp -o StrictHostKeyChecking=no -i /tmp/ssh-key Webpage1-Test-Instance/* ubuntu@${{ secrets.INSTANCE_1_IP }}:/var/www/html/
-                ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key ubuntu@${{ secrets.INSTANCE_1_IP }} "sudo systemctl restart apache2"
-
-      - name: Install SSH key for Instance 2
-        uses: shimataro/ssh-key-action@v2
+      - name: Deploy to ${{ matrix.server.name }} server
+        uses: appleboy/scp-action@v0.1.0
         with:
-              key: ${{ secrets.SSH_PRIVATE_KEY_INSTANCE_2 }}
-              known_hosts: ${{ secrets.KNOWN_HOSTS }}
-
-      - name: Deploy to Instance 2
-        run: |
-               scp -o StrictHostKeyChecking=no -i /tmp/ssh-key Webpage2-Test-Machine/* ubuntu@${{ secrets.INSTANCE_2_IP }}:/var/www/html/
-               ssh -o StrictHostKeyChecking=no -i /tmp/ssh-key ubuntu@${{ secrets.INSTANCE_2_IP }} "sudo systemctl restart httpd"
-     
+          host: ${{ matrix.server.ip }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: 22
+          source: "index.html"
+          target: ${{ matrix.server.target }}
