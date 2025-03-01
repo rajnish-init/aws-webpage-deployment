@@ -3,7 +3,7 @@ name: Deploy to Web Servers
 on:
   push:
     branches:
-      - main  # Trigger the workflow on push to the main branch
+      - main
 
 jobs:
   deploy:
@@ -29,22 +29,32 @@ jobs:
 
     - name: Deploy Webpage 1 to Instance 1
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v0.1.10  
       with:
         host: ${{ secrets.INSTANCE1_IP }}
         username: ${{ secrets.INSTANCE1_USER }}
         key: ${{ secrets.INSTANCE1_SSH_KEY }}
         script: |
-          # Copy files from GitHub runner to remote server using scp
-          scp -o StrictHostKeyChecking=no -r ${{ github.workspace }}/Webpage1-Test-Instance/* ${{ secrets.INSTANCE1_USER }}@${{ secrets.INSTANCE1_IP }}:/tmp/
-          # Deploy files from /tmp to the web directory
-          ssh -o StrictHostKeyChecking=no ${{ secrets.INSTANCE1_USER }}@${{ secrets.INSTANCE1_IP }} "
-            cd /var/www/html
-            sudo rm -rf *
-            sudo cp -r /tmp/* .
-            sudo systemctl daemon-reload
-            sudo systemctl restart nginx
-          "
+          # Ensure /var/www/html exists
+          sudo mkdir -p /var/www/html
+          sudo chown -R $USER:$USER /var/www/html
+
+    - name: Sync Webpage 1 to Instance 1 using rsync
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
+      run: |
+        rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./Webpage1-Test-Instance/ \
+        ${{ secrets.INSTANCE1_USER }}@${{ secrets.INSTANCE1_IP }}:/var/www/html/
+
+    - name: Restart Nginx on Instance 1
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
+      uses: appleboy/ssh-action@v0.1.10  
+      with:
+        host: ${{ secrets.INSTANCE1_IP }}
+        username: ${{ secrets.INSTANCE1_USER }}
+        key: ${{ secrets.INSTANCE1_SSH_KEY }}
+        script: |
+          sudo systemctl daemon-reload
+          sudo systemctl restart nginx
 
     - name: Add Instance 2 to known_hosts
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
@@ -54,19 +64,28 @@ jobs:
 
     - name: Deploy Webpage 2 to Instance 2
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v0.1.10  
       with:
         host: ${{ secrets.INSTANCE2_IP }}
         username: ${{ secrets.INSTANCE2_USER }}
         key: ${{ secrets.INSTANCE2_SSH_KEY }}
         script: |
-          # Copy files from GitHub runner to remote server using scp
-          scp -o StrictHostKeyChecking=no -r ${{ github.workspace }}/Webpage2-Test-Machine/* ${{ secrets.INSTANCE2_USER }}@${{ secrets.INSTANCE2_IP }}:/tmp/
-          # Deploy files from /tmp to the web directory
-          ssh -o StrictHostKeyChecking=no ${{ secrets.INSTANCE2_USER }}@${{ secrets.INSTANCE2_IP }} "
-            cd /var/www/html
-            sudo rm -rf *
-            sudo cp -r /tmp/* .
-            sudo systemctl daemon-reload
-            sudo systemctl restart nginx
-          "
+          sudo mkdir -p /var/www/html
+          sudo chown -R $USER:$USER /var/www/html
+
+    - name: Sync Webpage 2 to Instance 2 using rsync
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
+      run: |
+        rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./Webpage2-Test-Machine/ \
+        ${{ secrets.INSTANCE2_USER }}@${{ secrets.INSTANCE2_IP }}:/var/www/html/
+
+    - name: Restart Nginx on Instance 2
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
+      uses: appleboy/ssh-action@v0.1.10  
+      with:
+        host: ${{ secrets.INSTANCE2_IP }}
+        username: ${{ secrets.INSTANCE2_USER }}
+        key: ${{ secrets.INSTANCE2_SSH_KEY }}
+        script: |
+          sudo systemctl daemon-reload
+          sudo systemctl restart nginx
