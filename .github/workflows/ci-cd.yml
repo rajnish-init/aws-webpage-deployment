@@ -27,37 +27,38 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan ${{ secrets.INSTANCE1_IP }} >> ~/.ssh/known_hosts
 
-        - name: Deploy Webpage 1 to Instance 1
-        if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.INSTANCE1_IP }}
-          username: ${{ secrets.INSTANCE1_USER }}
-          key: ${{ secrets.INSTANCE1_SSH_KEY }}
-          scp: ${{ github.workspace }}/Webpage1-Test-Instance/* /tmp/
-          script: |
-            cd /var/www/html
-            sudo rm -rf *
-            sudo cp -r /tmp/* .
-            sudo systemctl daemon-reload
-            sudo systemctl restart nginx
+    - name: Deploy Webpage 1 to Instance 1
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.INSTANCE1_IP }}
+        username: ${{ secrets.INSTANCE1_USER }}
+        key: ${{ secrets.INSTANCE1_SSH_KEY }}
+        scp: ${{ github.workspace }}/Webpage1-Test-Instance/* /tmp/
+        script: |
+          cd /var/www/html
+          sudo rm -rf *
+          sudo cp -r /tmp/* .
+          sudo systemctl daemon-reload
+          sudo systemctl restart nginx
+
     - name: Add Instance 2 to known_hosts
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
       run: |
         mkdir -p ~/.ssh
         ssh-keyscan ${{ secrets.INSTANCE2_IP }} >> ~/.ssh/known_hosts
 
-        - name: Deploy Webpage 2 to Instance 2
-        if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.INSTANCE2_IP }}
-          username: ${{ secrets.INSTANCE2_USER }}
-          key: ${{ secrets.INSTANCE2_SSH_KEY }}
-          scp: ${{ github.workspace }}/Webpage2-Test-Machine/* /tmp/
-          script: |
-            cd /var/www/html
-            sudo rm -rf *
-            sudo cp -r /tmp/* .
-            sudo systemctl daemon-reload
-            sudo systemctl restart nginx
+    - name: Deploy Webpage 2 to Instance 2
+      if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.INSTANCE2_IP }}
+        username: ${{ secrets.INSTANCE2_USER }}
+        key: ${{ secrets.INSTANCE2_SSH_KEY }}
+        scp: ${{ github.workspace }}/Webpage2-Test-Machine/* /tmp/
+        script: |
+          cd /var/www/html
+          sudo rm -rf *
+          sudo cp -r /tmp/* .
+          sudo systemctl daemon-reload
+          sudo systemctl restart nginx
