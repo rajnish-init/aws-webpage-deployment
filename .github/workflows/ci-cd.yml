@@ -20,7 +20,9 @@ jobs:
         files: |
           Webpage1-Test-Instance/**
           Webpage2-Test-Machine/**
-
+    - name: Debug File Structure
+      run: ls -R ${{ github.workspace }}
+        
     - name: Add Instance 1 to known_hosts
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
       run: |
