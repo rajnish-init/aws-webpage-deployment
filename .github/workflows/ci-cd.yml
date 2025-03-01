@@ -34,8 +34,7 @@ jobs:
           host: ${{ secrets.INSTANCE1_IP }}
           username: ${{ secrets.INSTANCE1_USER }}
           key: ${{ secrets.INSTANCE1_SSH_KEY }}
-          scp: |
-            ${{ github.workspace }}/Webpage1-Test-Instance/* /tmp/
+          scp: ${{ github.workspace }}/Webpage1-Test-Instance/* /tmp/
           script: |
             cd /var/www/html
             sudo rm -rf *
@@ -55,8 +54,7 @@ jobs:
           host: ${{ secrets.INSTANCE2_IP }}
           username: ${{ secrets.INSTANCE2_USER }}
           key: ${{ secrets.INSTANCE2_SSH_KEY }}
-          scp: |
-            ${{ github.workspace }}/Webpage2-Test-Machine/* /tmp/
+          scp: ${{ github.workspace }}/Webpage2-Test-Machine/* /tmp/
           script: |
             cd /var/www/html
             sudo rm -rf *
