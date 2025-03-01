@@ -60,7 +60,9 @@ jobs:
         key: ${{ secrets.INSTANCE2_SSH_KEY }}
         # Copy files from GitHub runner to remote server's /tmp directory
         scp: |
-          ${{ github.workspace }}/Webpage2-Test-Machine/* :/tmp/
+          scp: |
+          /home/runner/work/aws-webpage-deployment/aws-webpage-deployment/Webpage2-Test-Machine/* :/tmp/
+
         script: |
           # Deploy files from /tmp to the web directory
           cd /var/www/html
