@@ -34,13 +34,17 @@ jobs:
         host: ${{ secrets.INSTANCE1_IP }}
         username: ${{ secrets.INSTANCE1_USER }}
         key: ${{ secrets.INSTANCE1_SSH_KEY }}
-        scp: ${{ github.workspace }}/Webpage1-Test-Instance/* /tmp/
         script: |
-          cd /var/www/html
-          sudo rm -rf *
-          sudo cp -r /tmp/* .
-          sudo systemctl daemon-reload
-          sudo systemctl restart nginx
+          # Copy files from GitHub runner to remote server using scp
+          scp -o StrictHostKeyChecking=no -r ${{ github.workspace }}/Webpage1-Test-Instance/* ${{ secrets.INSTANCE1_USER }}@${{ secrets.INSTANCE1_IP }}:/tmp/
+          # Deploy files from /tmp to the web directory
+          ssh -o StrictHostKeyChecking=no ${{ secrets.INSTANCE1_USER }}@${{ secrets.INSTANCE1_IP }} "
+            cd /var/www/html
+            sudo rm -rf *
+            sudo cp -r /tmp/* .
+            sudo systemctl daemon-reload
+            sudo systemctl restart nginx
+          "
 
     - name: Add Instance 2 to known_hosts
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
@@ -55,10 +59,14 @@ jobs:
         host: ${{ secrets.INSTANCE2_IP }}
         username: ${{ secrets.INSTANCE2_USER }}
         key: ${{ secrets.INSTANCE2_SSH_KEY }}
-        scp: ${{ github.workspace }}/Webpage2-Test-Machine/* /tmp/
         script: |
-          cd /var/www/html
-          sudo rm -rf *
-          sudo cp -r /tmp/* .
-          sudo systemctl daemon-reload
-          sudo systemctl restart nginx
+          # Copy files from GitHub runner to remote server using scp
+          scp -o StrictHostKeyChecking=no -r ${{ github.workspace }}/Webpage2-Test-Machine/* ${{ secrets.INSTANCE2_USER }}@${{ secrets.INSTANCE2_IP }}:/tmp/
+          # Deploy files from /tmp to the web directory
+          ssh -o StrictHostKeyChecking=no ${{ secrets.INSTANCE2_USER }}@${{ secrets.INSTANCE2_IP }} "
+            cd /var/www/html
+            sudo rm -rf *
+            sudo cp -r /tmp/* .
+            sudo systemctl daemon-reload
+            sudo systemctl restart nginx
+          "
