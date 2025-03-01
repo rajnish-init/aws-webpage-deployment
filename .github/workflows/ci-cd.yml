@@ -37,7 +37,7 @@ jobs:
         script: |
           cd /var/www/html
           sudo rm -rf *
-          sudo cp -r $GITHUB_WORKSPACE/Webpage1-Test-Instance/* .
+          sudo scp -r $GITHUB_WORKSPACE/Webpage1-Test-Instance/* .
           sudo systemctl restart nginx
 
     - name: Add Instance 2 to known_hosts
