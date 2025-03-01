@@ -3,7 +3,7 @@ name: Deploy to Web Servers
 on:
   push:
     branches:
-      - main  # Trigger the workflow on push to the main branch
+      - main
 
 jobs:
   deploy:
@@ -29,15 +29,20 @@ jobs:
 
     - name: Deploy Webpage 1 to Instance 1
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage1-Test-Instance/')
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v0.1.10  # Use a version that supports `scp`
       with:
         host: ${{ secrets.INSTANCE1_IP }}
         username: ${{ secrets.INSTANCE1_USER }}
         key: ${{ secrets.INSTANCE1_SSH_KEY }}
+        # Copy files from GitHub runner to remote server's /tmp directory
+        scp: |
+          ${{ github.workspace }}/Webpage1-Test-Instance/* :/tmp/
         script: |
+          # Deploy files from /tmp to the web directory
           cd /var/www/html
           sudo rm -rf *
-          sudo cp -r $GITHUB_WORKSPACE/Webpage1-Test-Instance/* .
+          sudo cp -r /tmp/* .
+          sudo systemctl daemon-reload
           sudo systemctl restart nginx
 
     - name: Add Instance 2 to known_hosts
@@ -48,13 +53,18 @@ jobs:
 
     - name: Deploy Webpage 2 to Instance 2
       if: contains(steps.changed-files.outputs.all_changed_files, 'Webpage2-Test-Machine/')
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v0.1.10  # Use a version that supports `scp`
       with:
         host: ${{ secrets.INSTANCE2_IP }}
         username: ${{ secrets.INSTANCE2_USER }}
         key: ${{ secrets.INSTANCE2_SSH_KEY }}
+        # Copy files from GitHub runner to remote server's /tmp directory
+        scp: |
+          ${{ github.workspace }}/Webpage2-Test-Machine/* :/tmp/
         script: |
+          # Deploy files from /tmp to the web directory
           cd /var/www/html
           sudo rm -rf *
-          sudo cp -r $GITHUB_WORKSPACE/Webpage2-Test-Machine/* .
+          sudo cp -r /tmp/* .
+          sudo systemctl daemon-reload
           sudo systemctl restart nginx
